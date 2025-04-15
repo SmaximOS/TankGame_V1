@@ -26,7 +26,8 @@ void Game::showInstructions()
 }
 
 
-void Game::showMenu() {
+void Game::showMenu(bool& exit) {
+	system("cls");
 	int choice;
 	int gameRunning = false;
 	while (!gameRunning) {
@@ -46,6 +47,7 @@ void Game::showMenu() {
 			break;
 		case 9:
 			cout << "Exiting the game. Goodbye!\n";
+			exit = true;
 			return;
 		default:
 			cout << "Invalid choice. Please try again.\n";
@@ -111,40 +113,78 @@ void Game::drawBoard() {
 	}
 }
 
+void Game::pauseGame(Tank& tank1, Tank& tank2, bool& running) {
+	gotoxy(0, GameConfig::HEIGHT + GameConfig::MINY + 1);
+	cout << "Game paused, press ESC again to continue or X to go back to the main menu";
+	char keyPressed = 0;
+
+	tank1.draw();
+	tank2.draw();
+
+
+	while (keyPressed != (char)GameConfig::eKeys::ESC && keyPressed != (char)GameConfig::eKeys::RETURN1 && keyPressed != (char)GameConfig::eKeys::RETURN2)
+	{
+		if (_kbhit())
+			keyPressed = _getch();
+	}
+	if (keyPressed == (char)GameConfig::eKeys::RETURN1 || keyPressed == (char)GameConfig::eKeys::RETURN2)
+		running = false;
+	
+
+	Point p1 = tank1.getPosition();
+	Point p2 = tank2.getPosition();
+	gotoxy(p1.getX(), p1.getY());
+	cout << " ";
+	gotoxy(p2.getX(), p2.getY());
+	cout << " ";
+
+
+	gotoxy(0, GameConfig::HEIGHT + GameConfig::MINY + 1);
+	cout << "                                                                         ";
+
+}
+
+
+
 void Game::run() {
-	initBoard();
-	showMenu();
-	drawBoard();
-	Tank tank1(Point(10, 10), 1, GameConfig::cannonDir::EAST);
-	Tank tank2(Point(70, 15), 2, GameConfig::cannonDir::WEST);
-	bool running = true;
-	while (running) {
-		
-		tank1.erase();
-		tank2.erase();
+	bool exit = false;
+	while (!exit) {
+		initBoard();
+		showMenu(exit);
+		if (exit)
+			break;
+		drawBoard();
+		Tank tank1(Point(10, 10), 1, GameConfig::cannonDir::EAST);
+		Tank tank2(Point(70, 15), 2, GameConfig::cannonDir::WEST);
+		bool running = true;
+		while (running) {
 
-		
-		if (_kbhit()) {
-			char k = _getch();
-			if (k == (char)GameConfig::eKeys::ESC) {
-				running = false;
-				break;
+			tank1.erase();
+			tank2.erase();
+
+
+			if (_kbhit()) {
+				char k = _getch();
+				if (k == (char)GameConfig::eKeys::ESC) {
+					pauseGame(tank1, tank2, running);
+
+				}
 			}
+
+
+			tank1.checkKeysP1();
+			tank2.checkKeysP2();
+
+
+			tank1.tick();
+			tank2.tick();
+
+
+			tank1.draw();
+			tank2.draw();
+
+
+			Sleep(100);
 		}
-
-		
-		tank1.checkKeysP1();
-		tank2.checkKeysP2();
-
-		
-		tank1.tick();
-		tank2.tick();
-
-		
-		tank1.draw();
-		tank2.draw();
-
-		
-		Sleep(100);
 	}
 }
